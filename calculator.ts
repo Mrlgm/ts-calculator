@@ -3,9 +3,10 @@ class Calculator {
   public container: HTMLDivElement;
   private output: HTMLDivElement;
   private span: HTMLSpanElement
-  public n1: number
-  public n2: number
+  public n1: string = null
+  public n2: string = null
   public operator: string
+  public result: string
   public keys: Array<Array<string>> = [
     ["Clear", "÷"],
     ["7", "8", "9", "×"],
@@ -27,6 +28,7 @@ class Calculator {
   createButtons() {
     this.keys.forEach((keysList: Array<string>) => {
       let div: HTMLDivElement = document.createElement('div')
+      div.className = 'row'
       keysList.forEach((key: string) => {
         this.createButton(key, div, `button text-${key}`)
       })
@@ -44,7 +46,7 @@ class Calculator {
     output.classList.add('output')
     let span: HTMLSpanElement = document.createElement('span')
     span.textContent = '0'
-    this.span =  span
+    this.span = span
     output.appendChild(span)
     this.output = output
     this.container.appendChild(output)
@@ -53,42 +55,68 @@ class Calculator {
     this.container.addEventListener('click', (event) => {
       if (event.target instanceof HTMLButtonElement) {
         let text = event.target.textContent
-        if ('0123456789'.indexOf(text) >= 0) {
-          if (this.operator) {
-            if (this.n2) {
-              this.n2 = parseInt(this.n2.toString() + text)
-            } else {
-              this.n2 = parseInt(text)
-            }
-            this.span.textContent = this.n2.toString()
-          } else {
-            if (this.n1) {
-              this.n1 = parseInt(this.n1.toString() + text)
-            } else {
-              this.n1 = parseInt(text)
-            }
-            this.span.textContent = this.n1.toString()
-          }
-        } else if ('+-×÷'.indexOf(text) >= 0) {
-          this.operator = text
-        } else if ('='.indexOf(text) >= 0) {
-          let result;
-          if (this.operator === '+') {
-            result = this.n1 + this.n2
-          }else if (this.operator === '-'){
-            result = this.n1 - this.n2
-          }else if(this.operator === '×'){
-            result = this.n1*this.n2
-          }else if(this.operator === '÷'){
-            result = this.n1/this.n2
-          }
-          this.span.textContent = result.toString()
-        }
+        this.updateInput(text)
       }
     })
   }
-  x() {
-
+  updateNumber(name: string, text: string) {
+    if (this[name]) {
+      this[name] += text
+    } else {
+      this[name] = text
+    }
+    this.span.textContent = this[name].toString()
+  }
+  updateNumbers(text) {
+    if (this.operator) {
+      this.updateNumber('n2', text)
+    } else {
+      this.updateNumber('n1', text)
+    }
+  }
+  updateResult() {
+    let result;
+    let n1: number = parseFloat(this.n1)
+    let n2: number = parseFloat(this.n2)
+    if (this.operator === '+') {
+      result = n1 + n2
+    } else if (this.operator === '-') {
+      result = n1 - n2
+    } else if (this.operator === '×') {
+      result = n1 * n2
+    } else if (this.operator === '÷') {
+      result = n1 / n2
+    }
+    result = result.toPrecision(12).replace(/.0+$/g, '').replace(/0+e/g, 'e')
+    if (n2 === 0) {
+      result = '不是数字'
+    }
+    this.span.textContent = result.toString()
+    this.n1 = null
+    this.n2 = null
+    this.operator = null
+    this.result = result
+  }
+  updateOperator(text) {
+    if (this.n1 === null) {
+      this.n1 = this.result
+    }
+    this.operator = text
+  }
+  updateInput(text) {
+    if ('0123456789.'.indexOf(text) >= 0) {
+      this.updateNumbers(text)
+    } else if ('+-×÷'.indexOf(text) >= 0) {
+      this.updateOperator(text)
+    } else if ('='.indexOf(text) >= 0) {
+      this.updateResult()
+    } else if (text === 'Clear') {
+      this.n1 = null
+      this.n2 = null
+      this.operator = null
+      this.result = null
+      this.span.textContent = '0'
+    }
   }
 }
 

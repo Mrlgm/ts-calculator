@@ -1,5 +1,7 @@
 var Calculator = /** @class */ (function () {
     function Calculator() {
+        this.n1 = null;
+        this.n2 = null;
         this.keys = [
             ["Clear", "÷"],
             ["7", "8", "9", "×"],
@@ -24,6 +26,7 @@ var Calculator = /** @class */ (function () {
         var _this = this;
         this.keys.forEach(function (keysList) {
             var div = document.createElement('div');
+            div.className = 'row';
             keysList.forEach(function (key) {
                 _this.createButton(key, div, "button text-" + key);
             });
@@ -51,49 +54,76 @@ var Calculator = /** @class */ (function () {
         this.container.addEventListener('click', function (event) {
             if (event.target instanceof HTMLButtonElement) {
                 var text = event.target.textContent;
-                if ('0123456789'.indexOf(text) >= 0) {
-                    if (_this.operator) {
-                        if (_this.n2) {
-                            _this.n2 = parseInt(_this.n2.toString() + text);
-                        }
-                        else {
-                            _this.n2 = parseInt(text);
-                        }
-                        _this.span.textContent = _this.n2.toString();
-                    }
-                    else {
-                        if (_this.n1) {
-                            _this.n1 = parseInt(_this.n1.toString() + text);
-                        }
-                        else {
-                            _this.n1 = parseInt(text);
-                        }
-                        _this.span.textContent = _this.n1.toString();
-                    }
-                }
-                else if ('+-×÷'.indexOf(text) >= 0) {
-                    _this.operator = text;
-                }
-                else if ('='.indexOf(text) >= 0) {
-                    var result = void 0;
-                    if (_this.operator === '+') {
-                        result = _this.n1 + _this.n2;
-                    }
-                    else if (_this.operator === '-') {
-                        result = _this.n1 - _this.n2;
-                    }
-                    else if (_this.operator === '×') {
-                        result = _this.n1 * _this.n2;
-                    }
-                    else if (_this.operator === '÷') {
-                        result = _this.n1 / _this.n2;
-                    }
-                    _this.span.textContent = result.toString();
-                }
+                _this.updateInput(text);
             }
         });
     };
-    Calculator.prototype.x = function () {
+    Calculator.prototype.updateNumber = function (name, text) {
+        if (this[name]) {
+            this[name] += text;
+        }
+        else {
+            this[name] = text;
+        }
+        this.span.textContent = this[name].toString();
+    };
+    Calculator.prototype.updateNumbers = function (text) {
+        if (this.operator) {
+            this.updateNumber('n2', text);
+        }
+        else {
+            this.updateNumber('n1', text);
+        }
+    };
+    Calculator.prototype.updateResult = function () {
+        var result;
+        var n1 = parseFloat(this.n1);
+        var n2 = parseFloat(this.n2);
+        if (this.operator === '+') {
+            result = n1 + n2;
+        }
+        else if (this.operator === '-') {
+            result = n1 - n2;
+        }
+        else if (this.operator === '×') {
+            result = n1 * n2;
+        }
+        else if (this.operator === '÷') {
+            result = n1 / n2;
+        }
+        result = result.toPrecision(12).replace(/.0+$/g, '').replace(/0+e/g, 'e');
+        if (n2 === 0) {
+            result = '不是数字';
+        }
+        this.span.textContent = result.toString();
+        this.n1 = null;
+        this.n2 = null;
+        this.operator = null;
+        this.result = result;
+    };
+    Calculator.prototype.updateOperator = function (text) {
+        if (this.n1 === null) {
+            this.n1 = this.result;
+        }
+        this.operator = text;
+    };
+    Calculator.prototype.updateInput = function (text) {
+        if ('0123456789.'.indexOf(text) >= 0) {
+            this.updateNumbers(text);
+        }
+        else if ('+-×÷'.indexOf(text) >= 0) {
+            this.updateOperator(text);
+        }
+        else if ('='.indexOf(text) >= 0) {
+            this.updateResult();
+        }
+        else if (text === 'Clear') {
+            this.n1 = null;
+            this.n2 = null;
+            this.operator = null;
+            this.result = null;
+            this.span.textContent = '0';
+        }
     };
     return Calculator;
 }());
